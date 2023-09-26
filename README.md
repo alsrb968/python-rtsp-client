@@ -1,6 +1,8 @@
 # python-rtsp-client
 PC RTSP 클라이언트 어플리케이션
 
+[android-rtsp-server](https://github.com/alsrb968/android-rtsp-server)
+
 ## 동작 화면
 <p align="center">
   <img src="img/server.png" align="center" width="30%">
