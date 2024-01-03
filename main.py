@@ -3,19 +3,15 @@ import socket
 import threading
 
 # 서버의 IP와 포트 번호를 정의합니다.
-SOCKET_IP = '192.168.0.17'
+SOCKET_IP = '192.168.0.11'
 SOCKET_PORT = 5001
 
 RTSP_URL = f"rtsp://{SOCKET_IP}:5000/"
 
 quit = False
 
-def receive_socket():    
-    # TCP 소켓 객체를 생성합니다.
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # 서버에 연결합니다.
-    client_socket.connect((SOCKET_IP, SOCKET_PORT))
-    
+def send_socket(client_socket):
+    global quit
     try:
         while True:
             # 사용자 입력을 받습니다.
@@ -23,22 +19,38 @@ def receive_socket():
             
             # 'exit'를 입력하면 루프를 종료합니다.
             if message == 'exit':
+                quit = True
                 break
 
             # 메시지를 서버에 전송합니다.
             client_socket.sendall(message.encode())
             print(f"Sent to server: {message}")
-            # break
+    finally:
+        client_socket.shutdown(socket.SHUT_RDWR)
+        client_socket.close()
 
+def receive_socket(client_socket):
+    global quit
+    try:
+        while not quit:
             # 서버로부터 응답을 받습니다.
             response = client_socket.recv(1024)
+            if not response:
+                break
             print(f"Received from server: {response.decode()}")
     finally:
-        # 소켓 연결을 종료합니다.
         client_socket.close()
-        global quit
-        quit = True
 
+# TCP 소켓 객체를 생성하고 서버에 연결합니다.
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((SOCKET_IP, SOCKET_PORT))
+
+# 송신 및 수신 스레드를 생성합니다.
+send_thread = threading.Thread(target=send_socket, args=(client_socket,))
+receive_thread = threading.Thread(target=receive_socket, args=(client_socket,))
+
+send_thread.start()
+receive_thread.start()
 
 # Create a VideoCapture object
 cap = cv2.VideoCapture(RTSP_URL)
@@ -48,9 +60,6 @@ cap.set(cv2.CAP_PROP_BUFFERSIZE, 10)
 if not cap.isOpened():
     print("Failed to connect to RTSP server")
     exit()
-
-t = threading.Thread(target=receive_socket)
-t.start()
 
 # Read and display video frames
 while True:
