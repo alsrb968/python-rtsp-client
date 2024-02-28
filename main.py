@@ -22,10 +22,10 @@ def send_socket(client_socket):
                 quit = True
                 break
 
-            data = message.strip().encode()
+            data = message.strip()
             # 메시지를 서버에 전송합니다.
-            client_socket.sendall(data)
-            print(f"Sent to server: {data}")
+            client_socket.sendall(data.encode())
+            print(f"Sent to server: {data}, {len(data)} bytes")
     finally:
         client_socket.shutdown(socket.SHUT_RDWR)
         client_socket.close()
@@ -39,9 +39,9 @@ def receive_socket(client_socket):
             if not response:
                 break
 
-            data = response.strip().decode()
-            hex_str = ' '.join([hex(x) for x in response.strip()])
-            print(f"Received from server: {data}({hex_str})")
+            data = response.strip()
+            hex_str = ' '.join([hex(x) for x in data])
+            print(f"Received from server: {data.decode('utf-8', errors='replace')}({hex_str}), {len(data)} bytes")
     finally:
         client_socket.close()
 
